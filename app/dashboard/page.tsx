@@ -14,6 +14,11 @@ const RocketAnimation = dynamic(() => import('@/components/RocketAnimation'), {
   loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">애니메이션 로딩 중...</div></div>
 });
 
+const YouTubePlayer = dynamic(() => import('@/components/YouTubeAutoPlayer'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">플레이어 로딩 중...</div></div>
+});
+
 interface LocationDetail {
   country: string;
   city: string;
@@ -36,6 +41,7 @@ export default function Dashboard() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [backendTimestamp, setBackendTimestamp] = useState<string | null>(null);
   const [isNightMode, setIsNightMode] = useState(false);
+  const [isLunchTime, setIsLunchTime] = useState(false);
   const [testMode, setTestMode] = useState(false); // Normal mode: Time-based (20:00-08:00)
   const [currentPage, setCurrentPage] = useState(0);
   const totalPages = 5;
@@ -79,16 +85,23 @@ export default function Dashboard() {
     }
   };
 
-  // Check if current time is in night mode (21:00 - 08:00)
-  const checkNightMode = () => {
+  // Check if current time is in night mode (22:00 - 09:00) or lunch time (11:45 - 12:15)
+  const checkTimeMode = () => {
     if (testMode) {
       // TEST MODE: Toggle every 5 seconds
       setIsNightMode(prev => !prev);
     } else {
-      // NORMAL MODE: Time-based (21:00 - 08:00)
+      // NORMAL MODE: Time-based
       const now = new Date();
       const currentHour = now.getHours();
-      setIsNightMode(currentHour >= 21 || currentHour < 8);
+      const currentMinutes = currentHour * 60 + now.getMinutes();
+      
+      // Night mode: 22:00 - 09:00
+      setIsNightMode(currentHour >= 22 || currentHour < 9);
+      
+      // YouTube page time: 11:45 - 12:15 (705 - 735 minutes)
+      // Only show YouTube page during this time
+      setIsLunchTime(currentMinutes >= 705 && currentMinutes < 735);
     }
   };
 
@@ -127,7 +140,7 @@ export default function Dashboard() {
     if (testMode) {
       // TEST MODE: Toggle black/normal every 5 seconds
       const testInterval = setInterval(() => {
-        checkNightMode();
+        checkTimeMode();
       }, 5000);
 
       // Still fetch data every 10 seconds
@@ -141,20 +154,20 @@ export default function Dashboard() {
       };
     } else {
       // NORMAL MODE: Original behavior
-      checkNightMode();
+      checkTimeMode();
 
       // Refresh every 10 seconds for more real-time feel
       const interval = setInterval(() => {
         fetchAnalyticsData();
-        checkNightMode();
+        checkTimeMode();
       }, 10000);
 
-      // Check night mode every minute to ensure accuracy
-      const nightModeInterval = setInterval(checkNightMode, 60000);
+      // Check time mode every minute to ensure accuracy
+      const timeModeInterval = setInterval(checkTimeMode, 60000);
 
       return () => {
         clearInterval(interval);
-        clearInterval(nightModeInterval);
+        clearInterval(timeModeInterval);
       };
     }
   }, [testMode]);
@@ -173,12 +186,21 @@ export default function Dashboard() {
     .sort(([, a], [, b]) => (b as number) - (a as number))
     .slice(0, 3);
 
-  // If in night mode (20:00 - 08:00), show black screen
+  // If in night mode (22:00 - 09:00), show black screen
   if (isNightMode) {
     return (
       <div className="w-screen h-screen bg-black" 
            style={{ width: '1920px', height: '1080px' }}>
         {/* Completely black screen for monitor protection */}
+      </div>
+    );
+  }
+
+  // If lunch time (11:45 - 12:15), show YouTube player page
+  if (isLunchTime) {
+    return (
+      <div className="relative bg-white" style={{ width: '1920px', height: '1080px' }}>
+        <YouTubePlayer />
       </div>
     );
   }
@@ -358,24 +380,9 @@ export default function Dashboard() {
           <RocketAnimation />
         </div>
 
-        {/* Page 4: Platform Analysis */}
-        <div className="relative p-8 bg-gray-900 text-white" style={{ width: '1920px', height: '1080px' }}>
-        <div className="h-full flex flex-col">
-          <h2 className="text-6xl font-bold text-center mb-12">플랫폼 분석</h2>
-          <div className="flex-1 flex items-center justify-center">
-            <div className="grid grid-cols-2 gap-12">
-              {Object.entries(realtimeData?.byPlatform || {}).map(([platform, count]) => (
-                <div key={platform} className="text-center">
-                  <div className="text-8xl font-black mb-4">{count as number}</div>
-                  <div className="text-4xl font-medium">{platform}</div>
-                  <div className="text-2xl mt-2 text-gray-400">
-                    {Math.round(((count as number) / (data?.totalActiveUsers || 1)) * 100)}% 점유율
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* Page 4: YouTube Player */}
+        <div className="relative bg-white" style={{ width: '1920px', height: '1080px' }}>
+          <YouTubePlayer />
         </div>
 
         {/* Page 5: Summary */}
