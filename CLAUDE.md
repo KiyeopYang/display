@@ -6,6 +6,21 @@
 - All content must fit within the viewport without scrolling
 - Design layouts to fit exactly within 1920x1080 pixels
 
+## Pagination System
+- **Dashboard is paginated by height, not traditional pagination**
+- Each page is exactly 1920x1080 pixels (Full HD screen size)
+- Pages are stacked vertically:
+  - Page 1: 0-1080px (first screen)
+  - Page 2: 1080-2160px (second screen, below first)
+  - Page 3: 2160-3240px (third screen, below second)
+  - And so on...
+- **Browser scrollbar must NEVER be visible**
+  - Use CSS `overflow: hidden` on body/html
+  - Control page transitions programmatically via JavaScript
+  - Use `window.scrollTo()` with specific pixel values for navigation
+- Page navigation should be instant (no smooth scrolling) for clean transitions
+- Each page must be self-contained within its 1920x1080 boundary
+
 ## Content Size Requirements
 - **Text and images must be large and easily readable**
 - Minimum font sizes:

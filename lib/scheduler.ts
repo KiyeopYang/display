@@ -4,6 +4,7 @@ import databaseService from './database';
 
 class SchedulerService {
   private task: cron.ScheduledTask | null = null;
+  private dailyTask: cron.ScheduledTask | null = null;
 
   startDataCollection(): void {
     if (this.task) {
@@ -39,14 +40,37 @@ class SchedulerService {
       }
     });
 
-    console.log('Scheduler started - collecting data every 3 minutes');
+    // Daily task to update user metrics (runs at 2 AM every day)
+    this.dailyTask = cron.schedule('0 2 * * *', async () => {
+      console.log(`[${new Date().toISOString()}] Running daily user metrics update...`);
+      
+      try {
+        // Get last 3 days of user metrics
+        const metrics = await googleAnalyticsService.getRecentUserMetrics(3);
+        
+        if (metrics && metrics.length > 0) {
+          // Save/update in database
+          await databaseService.saveUserMetricsBatch(metrics);
+          console.log(`Daily update completed - Updated ${metrics.length} days of user metrics`);
+        }
+      } catch (error) {
+        console.error('Error in daily scheduler:', error);
+      }
+    });
+
+    console.log('Scheduler started - collecting real-time data every 3 minutes and user metrics daily at 2 AM');
   }
 
   stopDataCollection(): void {
     if (this.task) {
       this.task.stop();
       this.task = null;
-      console.log('Scheduler stopped');
+      console.log('Real-time scheduler stopped');
+    }
+    if (this.dailyTask) {
+      this.dailyTask.stop();
+      this.dailyTask = null;
+      console.log('Daily scheduler stopped');
     }
   }
 

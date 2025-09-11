@@ -2,6 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { getKoreanLocationName } from '@/lib/locationKoreanNames';
+import dynamic from 'next/dynamic';
+
+const UserMetricsChart = dynamic(() => import('@/components/UserMetricsChart'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">차트 로딩 중...</div></div>
+});
+
+const RocketAnimation = dynamic(() => import('@/components/RocketAnimation'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">애니메이션 로딩 중...</div></div>
+});
 
 interface LocationDetail {
   country: string;
@@ -68,16 +79,16 @@ export default function Dashboard() {
     }
   };
 
-  // Check if current time is in night mode (20:00 - 08:00)
+  // Check if current time is in night mode (21:00 - 08:00)
   const checkNightMode = () => {
     if (testMode) {
       // TEST MODE: Toggle every 5 seconds
       setIsNightMode(prev => !prev);
     } else {
-      // NORMAL MODE: Time-based (20:00 - 08:00)
+      // NORMAL MODE: Time-based (21:00 - 08:00)
       const now = new Date();
       const currentHour = now.getHours();
-      setIsNightMode(currentHour >= 20 || currentHour < 8);
+      setIsNightMode(currentHour >= 21 || currentHour < 8);
     }
   };
 
@@ -334,78 +345,17 @@ export default function Dashboard() {
           </div>
         </div>
 
-          {/* Status indicators - Larger */}
-          <div className="absolute bottom-6 right-6 flex items-center gap-3">
-            {loading && (
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 bg-black rounded-full animate-pulse"></div>
-                <span className="text-xl font-bold">실시간 업데이트</span>
-              </div>
-            )}
-            </div>
           </div>
         </div>
 
-        {/* Page 2: Detailed Analytics */}
-        <div className="relative p-8 bg-black text-white" style={{ width: '1920px', height: '1080px' }}>
-        <div className="h-full flex flex-col">
-          <h2 className="text-6xl font-bold text-center mb-12">상세 분석</h2>
-          <div className="flex-1 grid grid-cols-2 gap-8">
-            <div className="bg-white/10 backdrop-blur rounded-2xl p-8 border-2 border-white/20">
-              <h3 className="text-4xl font-bold mb-6">지역별 트렌드</h3>
-              <div className="space-y-4">
-                {data?.locationDetails?.slice(0, 10).map((location, idx) => {
-                  const { cityKo, countryKo } = getKoreanLocationName(location.city, location.country);
-                  return (
-                    <div key={idx} className="flex justify-between items-center">
-                      <span className="text-2xl">{cityKo}, {countryKo}</span>
-                      <span className="text-3xl font-bold">{location.activeUsers}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="bg-white/10 backdrop-blur rounded-2xl p-8 border-2 border-white/20">
-              <h3 className="text-4xl font-bold mb-6">디바이스 분석</h3>
-              <div className="space-y-6">
-                {devices.map(([device, count]) => (
-                  <div key={device}>
-                    <div className="flex justify-between text-2xl mb-2">
-                      <span>{device === 'mobile' ? '모바일' : device === 'tablet' ? '태블릿' : '데스크톱'}</span>
-                      <span className="font-bold">{count as number}</span>
-                    </div>
-                    <div className="w-full h-8 bg-white/20 rounded-full overflow-hidden">
-                      <div className="h-full bg-white rounded-full" style={{ width: `${((count as number) / (data?.totalActiveUsers || 1)) * 100}%` }}></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Page 2: 2 Years User Metrics Chart */}
+        <div className="relative bg-white" style={{ width: '1920px', height: '1080px' }}>
+          <UserMetricsChart />
         </div>
 
-        {/* Page 3: Country Statistics */}
-        <div className="relative p-8 bg-white" style={{ width: '1920px', height: '1080px' }}>
-        <div className="h-full flex flex-col">
-          <h2 className="text-6xl font-bold text-center mb-12">국가별 통계</h2>
-          <div className="flex-1 grid grid-cols-3 gap-6">
-            {Object.entries(realtimeData?.byCountry || {})
-              .filter(([country]) => country !== '(other)' && country !== 'other')
-              .slice(0, 12)
-              .map(([country, count]) => {
-                const { countryKo } = getKoreanLocationName('', country);
-                if (countryKo === '기타' || countryKo === '(기타)') return null;
-                return (
-                  <div key={country} className="bg-black text-white rounded-2xl p-6 flex flex-col justify-center items-center">
-                    <div className="text-3xl font-bold mb-2">{countryKo}</div>
-                    <div className="text-5xl font-black">{count as number}</div>
-                    <div className="text-xl mt-2">사용자</div>
-                  </div>
-                );
-              }).filter(Boolean)}
-          </div>
-        </div>
+        {/* Page 3: Rocket Animation - Our Journey */}
+        <div className="relative bg-white" style={{ width: '1920px', height: '1080px' }}>
+          <RocketAnimation />
         </div>
 
         {/* Page 4: Platform Analysis */}
