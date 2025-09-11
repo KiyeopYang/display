@@ -44,6 +44,7 @@ export default function Dashboard() {
   const [isLunchTime, setIsLunchTime] = useState(false);
   const [testMode, setTestMode] = useState(false); // Normal mode: Time-based (20:00-08:00)
   const [currentPage, setCurrentPage] = useState(0);
+  const [noBlackMode, setNoBlackMode] = useState(false);
   const totalPages = 5;
 
   const fetchAnalyticsData = async () => {
@@ -127,6 +128,24 @@ export default function Dashboard() {
     }
   }, [currentPage, isNightMode]);
 
+  // Check for noblack parameter in URL and session storage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Check URL for noblack parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('noblack')) {
+        sessionStorage.setItem('noblack', 'true');
+        setNoBlackMode(true);
+      } else {
+        // Check session storage
+        const noblack = sessionStorage.getItem('noblack');
+        if (noblack === 'true') {
+          setNoBlackMode(true);
+        }
+      }
+    }
+  }, []);
+
   useEffect(() => {
     // Start the scheduler on component mount
     fetch('/api/analytics/scheduler/start', { method: 'POST' })
@@ -186,8 +205,8 @@ export default function Dashboard() {
     .sort(([, a], [, b]) => (b as number) - (a as number))
     .slice(0, 3);
 
-  // If in night mode (22:00 - 09:00), show black screen
-  if (isNightMode) {
+  // If in night mode (22:00 - 09:00), show black screen (unless noblack mode is active)
+  if (isNightMode && !noBlackMode) {
     return (
       <div className="w-screen h-screen bg-black" 
            style={{ width: '1920px', height: '1080px' }}>
