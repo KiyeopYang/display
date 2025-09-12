@@ -10,14 +10,17 @@
 - **Dashboard is paginated by height, not traditional pagination**
 - Each page is exactly 1920x1080 pixels (Full HD screen size)
 - Pages are stacked vertically:
-  - Page 1: 0-1080px (first screen)
-  - Page 2: 1080-2160px (second screen, below first)
-  - Page 3: 2160-3240px (third screen, below second)
-  - And so on...
+  - Page 1: 0-1080px (Main Dashboard - 실시간 데이터)
+  - Page 2: 1080-2160px (User Metrics Chart - 사용자 통계 차트)
+  - Page 3: 2160-3240px (Character Rankings - 캐릭터 순위)
+- **Automatic Page Rotation**
+  - Pages rotate automatically every 10 minutes (600000ms)
+  - Rotation cycle: Page 1 → Page 2 → Page 3 → Page 1 (반복)
+  - No manual navigation controls are displayed
 - **Browser scrollbar must NEVER be visible**
-  - Use CSS `overflow: hidden` on body/html
-  - Control page transitions programmatically via JavaScript
-  - Use `window.scrollTo()` with specific pixel values for navigation
+  - Scrollbar is hidden but scrolling is enabled programmatically
+  - Use CSS to hide scrollbar while allowing scroll functionality
+  - Control page transitions via JavaScript `window.scrollTo()`
 - Page navigation should be instant (no smooth scrolling) for clean transitions
 - Each page must be self-contained within its 1920x1080 boundary
 
@@ -53,14 +56,39 @@ This is a real-time Google Analytics 4 dashboard that:
 - `/lib/locationKoreanNames.ts` - Korean translation mappings
 - `/app/api/analytics/*` - API routes for data fetching
 
+## Dashboard Behavior & Time-based Features
+
+### Night Mode (22:00 - 09:00)
+- Screen turns completely black for monitor protection
+- All dashboard functions are paused
+- Can be disabled with `?noblack` URL parameter (saved in session)
+
+### Lunch Time Music (11:45 - 13:00)
+- YouTube music player activates automatically
+- Dashboard page rotation is paused during this time
+- Returns to normal dashboard after lunch time ends (13:00)
+
+### Data Refresh Intervals
+- **Real-time data**: Updates every 10 seconds
+- **Database save**: Every 1 minute (via scheduler)
+- **Page rotation**: Every 10 minutes (cycles through 3 pages)
+
+### Visual Design Elements
+- **No dashed borders**: All borders are solid lines
+- **Full screen charts**: Page 2 chart uses full screen without borders
+- **Date range display**: Shows date range without "기간" label
+- **Large text**: All text sized for viewing from 2-3 meters distance
+
 ## Development Notes
 - Server runs on port 3003 (auto-selected if 3000 is busy)
 - Hot-reload is enabled by default with Next.js
 - CORS is handled automatically (same origin)
 - Environment variables are in `.env` file
+- Console logs show page changes and scroll events for debugging
 
 ## Design Constraints
 - Fixed viewport: 1920x1080
-- No scrollbars allowed
-- All content must be visible without scrolling
+- No scrollbars visible (hidden via CSS)
+- All content must be visible without scrolling within each page
 - Optimize layout for Full HD displays only
+- No manual navigation controls displayed

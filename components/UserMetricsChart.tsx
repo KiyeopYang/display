@@ -12,7 +12,12 @@ import {
   Legend,
   ChartOptions
 } from 'chart.js';
-import { Line } from 'react-chartjs-2';
+import dynamic from 'next/dynamic';
+
+const AnimatedLineChart = dynamic(() => import('./AnimatedLineChart'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold text-white">차트 로딩 중...</div></div>
+});
 
 ChartJS.register(
   CategoryScale,
@@ -28,21 +33,52 @@ export default function UserMetricsChart() {
   const [chartData, setChartData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<{start: string, end: string} | null>(null);
+  const [duration, setDuration] = useState<string>('');
 
   useEffect(() => {
     fetchChartData();
   }, []);
+
+  const calculateDuration = (start: string, end: string) => {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays >= 365) {
+      const years = Math.floor(diffDays / 365);
+      const remainingDays = diffDays % 365;
+      const months = Math.floor(remainingDays / 30);
+      if (months > 0) {
+        return `${years}년 ${months}개월`;
+      }
+      return `${years}년`;
+    } else if (diffDays >= 30) {
+      const months = Math.floor(diffDays / 30);
+      const remainingDays = diffDays % 30;
+      if (remainingDays > 0) {
+        return `${months}개월 ${remainingDays}일`;
+      }
+      return `${months}개월`;
+    } else {
+      return `${diffDays}일`;
+    }
+  };
 
   const fetchChartData = async () => {
     try {
       const response = await fetch('/api/analytics/user-metrics/chart-data');
       const result = await response.json();
       
+      console.log('Chart data received:', result);
+      
       if (result.success && result.data) {
-        // Sample data to show monthly averages for better visualization
-        const monthlyData = sampleMonthlyData(result.data);
-        setChartData(monthlyData);
+        // Use daily data directly without sampling
+        setChartData(result.data);
         setDateRange(result.dateRange);
+        if (result.dateRange) {
+          setDuration(calculateDuration(result.dateRange.start, result.dateRange.end));
+        }
       }
     } catch (error) {
       console.error('Error fetching chart data:', error);
@@ -51,70 +87,6 @@ export default function UserMetricsChart() {
     }
   };
 
-  const sampleMonthlyData = (data: any) => {
-    const labels = [];
-    const totalUsers = [];
-    const newUsers = [];
-    const returningUsers = [];
-    
-    // Sample every 60 days for better visibility from distance
-    for (let i = 0; i < data.labels.length; i += 60) {
-      const dateStr = data.labels[i];
-      if (dateStr) {
-        const date = new Date(dateStr);
-        const monthYear = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`;
-        labels.push(monthYear);
-        totalUsers.push(data.datasets[0].data[i]);
-        newUsers.push(data.datasets[1].data[i]);
-        returningUsers.push(data.datasets[2].data[i]);
-      }
-    }
-    
-    return {
-      labels,
-      datasets: [
-        {
-          label: '전체 사용자',
-          data: totalUsers,
-          borderColor: '#FF0000',
-          backgroundColor: 'rgba(255, 0, 0, 0.2)',
-          borderWidth: 10,
-          tension: 0, // Straight lines
-          pointRadius: 10,
-          pointBackgroundColor: '#FF0000',
-          pointBorderColor: '#FFFFFF',
-          pointBorderWidth: 3,
-          pointHoverRadius: 15,
-        },
-        {
-          label: '신규 사용자',
-          data: newUsers,
-          borderColor: '#0066FF',
-          backgroundColor: 'rgba(0, 102, 255, 0.2)',
-          borderWidth: 8,
-          tension: 0, // Straight lines
-          pointRadius: 8,
-          pointBackgroundColor: '#0066FF',
-          pointBorderColor: '#FFFFFF',
-          pointBorderWidth: 3,
-          pointHoverRadius: 12,
-        },
-        {
-          label: '재방문 사용자',
-          data: returningUsers,
-          borderColor: '#00CC00',
-          backgroundColor: 'rgba(0, 204, 0, 0.2)',
-          borderWidth: 8,
-          tension: 0, // Straight lines
-          pointRadius: 8,
-          pointBackgroundColor: '#00CC00',
-          pointBorderColor: '#FFFFFF',
-          pointBorderWidth: 3,
-          pointHoverRadius: 12,
-        }
-      ]
-    };
-  };
 
   const options: ChartOptions<'line'> = {
     responsive: true,
@@ -128,7 +100,7 @@ export default function UserMetricsChart() {
             weight: 'bold'
           },
           padding: 40,
-          color: '#000000',
+          color: '#FFFFFF',
           usePointStyle: true,
           pointStyle: 'rectRounded',
           boxWidth: 30,
@@ -137,12 +109,12 @@ export default function UserMetricsChart() {
       },
       title: {
         display: true,
-        text: '지난 2년간 사용자 통계',
+        text: '지난 1년간 사용자 통계',
         font: {
           size: 64,
           weight: 'bold'
         },
-        color: '#000000',
+        color: '#FFFFFF',
         padding: 20
       },
       tooltip: {
@@ -167,43 +139,41 @@ export default function UserMetricsChart() {
     scales: {
       x: {
         grid: {
-          color: 'rgba(0, 0, 0, 0.3)',
-          lineWidth: 3
+          color: 'rgba(255, 255, 255, 0.1)',
+          lineWidth: 1
         },
         ticks: {
           font: {
-            size: 24,
+            size: 16,
             weight: 'bold'
           },
-          color: '#000000',
+          color: '#FFFFFF',
           maxRotation: 45,
-          minRotation: 45,
+          minRotation: 0,
           autoSkip: true,
-          maxTicksLimit: 12
+          maxTicksLimit: 30
         },
         border: {
-          color: '#000000',
-          width: 5
+          display: false
         }
       },
       y: {
         grid: {
-          color: 'rgba(0, 0, 0, 0.2)',
-          lineWidth: 2
+          color: 'rgba(255, 255, 255, 0.1)',
+          lineWidth: 1
         },
         ticks: {
           font: {
             size: 28,
             weight: 'bold'
           },
-          color: '#000000',
+          color: '#FFFFFF',
           callback: function(value) {
             return value.toLocaleString('ko-KR');
           }
         },
         border: {
-          color: '#000000',
-          width: 5
+          display: false
         }
       }
     },
@@ -215,30 +185,53 @@ export default function UserMetricsChart() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-4xl font-bold">차트 로딩 중...</div>
+      <div className="flex items-center justify-center h-full bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+        <div className="text-4xl font-bold text-white animate-pulse">차트 로딩 중...</div>
       </div>
     );
   }
 
   if (!chartData) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-4xl font-bold text-gray-500">데이터 없음</div>
+      <div className="flex items-center justify-center h-full bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+        <div className="text-4xl font-bold text-gray-400">데이터 없음</div>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full p-4">
-      <div style={{ height: '950px' }}>
-        <Line options={options} data={chartData} />
+    <div className="w-full h-full bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+      {/* Grid background overlay */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="chart-grid" width="50" height="50" patternUnits="userSpaceOnUse">
+              <path d="M 50 0 L 0 0 0 50" fill="none" stroke="white" strokeWidth="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#chart-grid)" />
+        </svg>
       </div>
-      {dateRange && (
-        <div className="text-center mt-2 text-3xl font-bold text-black">
-          기간: {dateRange.start} ~ {dateRange.end}
+      
+      
+      <div className="relative z-10 h-full flex flex-col">
+        <div className="flex-1 p-8">
+          {!loading && chartData ? (
+            <AnimatedLineChart options={options} data={chartData} />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-4xl font-bold text-white animate-pulse">차트 로딩 중...</div>
+            </div>
+          )}
         </div>
-      )}
+        {dateRange && (
+          <div className="text-center pb-6">
+            <div className="text-4xl font-bold text-white">
+              {dateRange.start} ~ {dateRange.end}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

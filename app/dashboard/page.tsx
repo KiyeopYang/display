@@ -19,6 +19,16 @@ const YouTubePlayer = dynamic(() => import('@/components/YouTubeAutoPlayer'), {
   loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">플레이어 로딩 중...</div></div>
 });
 
+const CharacterRankingPage = dynamic(() => import('@/components/CharacterRankingPage'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">순위 로딩 중...</div></div>
+});
+
+const CharacterReviewsPage = dynamic(() => import('@/components/CharacterReviewsPage'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">리뷰 로딩 중...</div></div>
+});
+
 interface LocationDetail {
   country: string;
   city: string;
@@ -45,7 +55,9 @@ export default function Dashboard() {
   const [testMode, setTestMode] = useState(false); // Normal mode: Time-based (20:00-08:00)
   const [currentPage, setCurrentPage] = useState(0);
   const [noBlackMode, setNoBlackMode] = useState(false);
-  const totalPages = 5;
+  const [isVisible, setIsVisible] = useState(false);
+  const [animatedDots, setAnimatedDots] = useState<Array<{left: number, top: number, delay: number, duration: number, opacity: number}>>([]);
+  const totalPages = 4; // Changed to 4 pages for the loop (including reviews)
 
   const fetchAnalyticsData = async () => {
     setLoading(true);
@@ -100,33 +112,45 @@ export default function Dashboard() {
       // Night mode: 22:00 - 09:00
       setIsNightMode(currentHour >= 22 || currentHour < 9);
       
-      // YouTube page time: 11:45 - 12:15 (705 - 735 minutes)
+      // YouTube page time: 11:45 - 13:00 (705 - 780 minutes)
       // Only show YouTube page during this time
-      setIsLunchTime(currentMinutes >= 705 && currentMinutes < 735);
+      setIsLunchTime(currentMinutes >= 705 && currentMinutes < 780);
     }
   };
 
-  // Auto scroll to next page - DISABLED FOR NOW
-  // useEffect(() => {
-  //   if (!isNightMode) {
-  //     const pageInterval = setInterval(() => {
-  //       setCurrentPage((prev) => (prev + 1) % totalPages);
-  //     }, 5000); // Change page every 5 seconds
+  // Auto scroll to next page every 10 minutes (pages 1, 2, 3 in loop)
+  useEffect(() => {
+    if (!isNightMode && !isLunchTime) {
+      console.log('Starting auto-scroll interval (10 minutes)');
+      const pageInterval = setInterval(() => {
+        setCurrentPage((prev) => {
+          const nextPage = (prev + 1) % totalPages;
+          console.log('Changing page from', prev + 1, 'to', nextPage + 1);
+          return nextPage;
+        });
+      }, 600000); // Change page every 10 minutes (600000ms)
 
-  //     return () => clearInterval(pageInterval);
-  //   }
-  // }, [isNightMode, totalPages]);
+      return () => {
+        console.log('Clearing auto-scroll interval');
+        clearInterval(pageInterval);
+      };
+    }
+  }, [isNightMode, isLunchTime, totalPages]);
 
   // Scroll to current page when it changes
   useEffect(() => {
-    if (typeof window !== 'undefined' && !isNightMode) {
-      const targetY = currentPage * 1080;
-      window.scrollTo({
-        top: targetY,
-        behavior: 'auto' // Instant scroll
-      });
+    if (typeof window !== 'undefined' && !isNightMode && !isLunchTime) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        const targetY = currentPage * 1080;
+        console.log('Scrolling to page:', currentPage + 1, 'Y position:', targetY);
+        window.scrollTo(0, targetY);
+        // Also try with document.documentElement for better browser compatibility
+        document.documentElement.scrollTop = targetY;
+        document.body.scrollTop = targetY; // For Safari
+      }, 100);
     }
-  }, [currentPage, isNightMode]);
+  }, [currentPage, isNightMode, isLunchTime]);
 
   // Check for noblack parameter in URL and session storage
   useEffect(() => {
@@ -146,6 +170,20 @@ export default function Dashboard() {
     }
   }, []);
 
+  // Generate animated dots only on client side after hydration
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const dots = Array.from({ length: 15 }, () => ({
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        delay: Math.random() * 3,
+        duration: 3 + Math.random() * 2,
+        opacity: Math.random() * 0.2
+      }));
+      setAnimatedDots(dots);
+    }
+  }, []);
+
   useEffect(() => {
     // Start the scheduler on component mount
     fetch('/api/analytics/scheduler/start', { method: 'POST' })
@@ -155,6 +193,12 @@ export default function Dashboard() {
 
     // Initial fetch
     fetchAnalyticsData();
+    
+    // Trigger animation after mount
+    setTimeout(() => setIsVisible(true), 100);
+    
+    // Initialize currentPage to 0 to ensure we start from page 1
+    setCurrentPage(0);
 
     if (testMode) {
       // TEST MODE: Toggle black/normal every 5 seconds
@@ -215,7 +259,7 @@ export default function Dashboard() {
     );
   }
 
-  // If lunch time (11:45 - 12:15), show YouTube player page
+  // If lunch time (11:45 - 13:00), show YouTube player page
   if (isLunchTime) {
     return (
       <div className="relative bg-white" style={{ width: '1920px', height: '1080px' }}>
@@ -233,40 +277,74 @@ export default function Dashboard() {
         }
         
         /* Hide scrollbar for IE, Edge and Firefox */
-        body {
+        html, body {
           -ms-overflow-style: none;  /* IE and Edge */
           scrollbar-width: none;  /* Firefox */
+          overflow-y: auto;  /* Allow vertical scrolling */
+          overflow-x: hidden;  /* Prevent horizontal scrolling */
         }
       `}</style>
       <style jsx>{`
-        @keyframes glow {
+        @keyframes softGlow {
           0%, 100% {
             text-shadow: 
-              0 0 10px rgba(255, 255, 255, 0.2),
-              0 0 20px rgba(255, 255, 255, 0.1);
+              0 0 20px rgba(139, 92, 246, 0.5),
+              0 0 40px rgba(139, 92, 246, 0.3),
+              0 0 60px rgba(236, 72, 153, 0.2);
           }
           50% {
             text-shadow: 
-              0 0 15px rgba(255, 255, 255, 0.3),
-              0 0 25px rgba(255, 255, 255, 0.15);
+              0 0 30px rgba(139, 92, 246, 0.7),
+              0 0 50px rgba(139, 92, 246, 0.5),
+              0 0 70px rgba(236, 72, 153, 0.3);
           }
         }
         
-        .animate-glow {
-          animation: glow 5s ease-in-out infinite;
+        .soft-glow {
+          animation: softGlow 6s ease-in-out infinite;
+          color: #ffffff;
         }
       `}</style>
       
-      <div className="w-screen bg-white text-black" 
-           style={{ width: '1920px', overflowX: 'hidden' }}>
+      <div className="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white" 
+           style={{ width: '1920px' }}>
 
         {/* Page 1: Main Dashboard */}
         <div className="relative p-6" style={{ width: '1920px', height: '1080px' }}>
-          <div className="h-full flex flex-col">
+          {/* Grid background overlay */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="dashboard-grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                  <path d="M 50 0 L 0 0 0 50" fill="none" stroke="white" strokeWidth="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#dashboard-grid)" />
+            </svg>
+          </div>
+          
+          {/* Animated dots background */}
+          <div className="absolute inset-0 pointer-events-none">
+            {animatedDots.map((dot, i) => (
+              <div
+                key={`bg-dot-${i}`}
+                className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+                style={{
+                  left: `${dot.left}%`,
+                  top: `${dot.top}%`,
+                  animationDelay: `${dot.delay}s`,
+                  animationDuration: `${dot.duration}s`,
+                  opacity: dot.opacity
+                }}
+              />
+            ))}
+          </div>
+          
+          <div className="h-full flex flex-col relative z-10">
         {/* Data update time - centered, minimal */}
         <div className="text-center text-xs text-gray-400 mb-2">
           <span>데이터: {backendTimestamp ? new Date(backendTimestamp).toLocaleString('ko-KR') : '대기 중'}</span>
-          <span className="mx-3">|</span>
+          <span className="mx-3 opacity-40">|</span>
           <span>갱신: {lastUpdate ? lastUpdate.toLocaleString('ko-KR') : '연결 중'}</span>
         </div>
 
@@ -276,16 +354,18 @@ export default function Dashboard() {
           {/* Row 1: Main Stats */}
           <div className="grid grid-cols-4 gap-4">
             {/* Active Users - Extra Large */}
-            <div className="col-span-1 bg-black rounded-2xl p-8 flex flex-col justify-center items-center shadow-2xl relative overflow-hidden">
-              <div className="text-9xl font-black text-white animate-glow">
+            <div className={`col-span-1 bg-black/40 backdrop-blur-sm rounded-2xl p-8 flex flex-col justify-center items-center shadow-2xl relative overflow-hidden border-2 border-white/20 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} 
+                 style={{ transitionDelay: '100ms' }}>
+              <div className="text-9xl font-black soft-glow">
                 {data?.totalActiveUsers || '0'}
               </div>
-              <div className="text-3xl text-white mt-4 font-bold uppercase tracking-wider">실시간 사용자 수</div>
+              <div className="text-3xl text-white/90 mt-4 font-bold uppercase tracking-wider">실시간 사용자 수</div>
             </div>
 
             {/* Top Countries - Larger text */}
-            <div className="col-span-1 bg-white border-4 border-black rounded-2xl p-6 shadow-xl">
-              <h3 className="text-3xl font-black mb-5 uppercase">국가별 사용자</h3>
+            <div className={`col-span-1 bg-black/20 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-2 border-white/30 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+                 style={{ transitionDelay: '200ms' }}>
+              <h3 className="text-3xl font-black mb-5 uppercase text-white">국가별 사용자</h3>
               <div className="space-y-3">
                 {topCountries
                   .filter(([country]) => country !== '(other)' && country !== 'other')
@@ -294,13 +374,13 @@ export default function Dashboard() {
                     if (countryKo === '기타' || countryKo === '(기타)') return null;
                     return (
                       <div key={country} className="flex justify-between items-center">
-                        <span className="text-xl font-bold">{countryKo}</span>
+                        <span className="text-xl font-bold text-white/90">{countryKo}</span>
                         <div className="flex items-center">
-                          <div className="w-32 h-4 bg-gray-200 rounded-full mr-4 overflow-hidden border border-black">
-                            <div className="h-full bg-black rounded-full transition-all duration-500"
+                          <div className="w-32 h-4 bg-white/10 rounded-full mr-4 overflow-hidden border border-white/30">
+                            <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
                                  style={{ width: `${((count as number) / (data?.totalActiveUsers || 1)) * 100}%` }}></div>
                           </div>
-                          <span className="text-2xl font-black w-16 text-right">{count as number}</span>
+                          <span className="text-2xl font-black w-16 text-right text-white">{count as number}</span>
                         </div>
                       </div>
                     );
@@ -309,17 +389,18 @@ export default function Dashboard() {
             </div>
 
             {/* Device Stats - Larger text */}
-            <div className="col-span-1 bg-white border-4 border-black rounded-2xl p-6 shadow-xl">
-              <h3 className="text-3xl font-black mb-5 uppercase">기기별 분포</h3>
+            <div className={`col-span-1 bg-black/20 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-2 border-white/30 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+                 style={{ transitionDelay: '300ms' }}>
+              <h3 className="text-3xl font-black mb-5 uppercase text-white">기기별 분포</h3>
               <div className="space-y-4">
                 {devices.map(([device, count]) => (
                   <div key={device} className="flex justify-between items-center">
-                    <span className="text-xl font-bold">
+                    <span className="text-xl font-bold text-white/90">
                       {device === 'mobile' ? '모바일' : device === 'tablet' ? '태블릿' : device === 'desktop' ? '데스크톱' : device}
                     </span>
                     <div className="flex items-center gap-3">
-                      <div className="text-4xl font-black">{count as number}</div>
-                      <div className="text-lg font-medium">
+                      <div className="text-4xl font-black text-white">{count as number}</div>
+                      <div className="text-lg font-medium text-white/70">
                         ({Math.round(((count as number) / (data?.totalActiveUsers || 1)) * 100)}%)
                       </div>
                     </div>
@@ -329,15 +410,16 @@ export default function Dashboard() {
             </div>
 
             {/* Platform Stats - Larger text */}
-            <div className="col-span-1 bg-white border-4 border-black rounded-2xl p-6 shadow-xl">
-              <h3 className="text-3xl font-black mb-5 uppercase">플랫폼별 분포</h3>
+            <div className={`col-span-1 bg-black/20 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-2 border-white/30 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+                 style={{ transitionDelay: '400ms' }}>
+              <h3 className="text-3xl font-black mb-5 uppercase text-white">플랫폼별 분포</h3>
               <div className="space-y-4">
                 {platforms.map(([platform, count]) => (
                   <div key={platform} className="flex justify-between items-center">
-                    <span className="text-xl font-bold">{platform}</span>
+                    <span className="text-xl font-bold text-white/90">{platform}</span>
                     <div className="flex items-center gap-3">
-                      <div className="text-4xl font-black">{count as number}</div>
-                      <div className="text-lg font-medium">
+                      <div className="text-4xl font-black text-white">{count as number}</div>
+                      <div className="text-lg font-medium text-white/70">
                         ({Math.round(((count as number) / (data?.totalActiveUsers || 1)) * 100)}%)
                       </div>
                     </div>
@@ -348,8 +430,9 @@ export default function Dashboard() {
           </div>
 
           {/* Row 2 & 3: Cities Grid - Larger text, fewer items for better readability */}
-          <div className="row-span-2 bg-white border-4 border-black rounded-2xl p-6 shadow-xl">
-            <h3 className="text-4xl font-black mb-6 text-center uppercase">도시별 실시간 사용자</h3>
+          <div className={`row-span-2 bg-black/20 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-2 border-white/30 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+               style={{ transitionDelay: '500ms' }}>
+            <h3 className="text-4xl font-black mb-6 text-center uppercase text-white">도시별 실시간 사용자</h3>
             <div className="grid grid-cols-4 gap-4 h-[calc(100%-4rem)]">
               {data?.locationDetails
                 .filter(loc => loc.city !== '(other)')
@@ -360,10 +443,10 @@ export default function Dashboard() {
                     <div
                       key={`${location.city}-${location.country}-${index}`}
                       className={`flex items-center justify-between p-4 rounded-lg transition-all border-2 ${
-                        index === 0 ? 'border-black bg-black text-white' :
-                        index === 1 ? 'border-black bg-gray-800 text-white' :
-                        index === 2 ? 'border-black bg-gray-600 text-white' :
-                        'border-black bg-white'
+                        index === 0 ? 'border-white/60 bg-gradient-to-r from-blue-600/60 to-purple-600/60 text-white' :
+                        index === 1 ? 'border-white/40 bg-gradient-to-r from-blue-500/40 to-purple-500/40 text-white' :
+                        index === 2 ? 'border-white/30 bg-gradient-to-r from-blue-400/30 to-purple-400/30 text-white' :
+                        'border-white/20 bg-white/10 text-white'
                       }`}
                     >
                       <div className="flex-1">
@@ -372,11 +455,11 @@ export default function Dashboard() {
                         ) : (
                           <>
                             <div className="text-3xl font-bold">{countryKo}</div>
-                            <div className={`text-lg ${index < 3 ? 'opacity-80' : 'text-gray-500'}`}>{cityKo}</div>
+                            <div className={`text-lg ${index < 3 ? 'opacity-80' : 'opacity-70'}`}>{cityKo}</div>
                           </>
                         )}
                       </div>
-                      <div className={`text-5xl font-black ${index < 3 ? '' : ''}`}>
+                      <div className="text-5xl font-black">
                         {location.activeUsers}
                       </div>
                     </div>
@@ -389,39 +472,29 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Page 2: 2 Years User Metrics Chart */}
+        {/* Page 2: User Metrics Chart */}
         <div className="relative bg-white" style={{ width: '1920px', height: '1080px' }}>
           <UserMetricsChart />
         </div>
 
-        {/* Page 3: Rocket Animation - Our Journey */}
-        <div className="relative bg-white" style={{ width: '1920px', height: '1080px' }}>
-          <RocketAnimation />
+        {/* Page 3: Character Rankings (Payment Rate Rankings) */}
+        <div className="relative bg-gray-900" style={{ width: '1920px', height: '1080px' }}>
+          <CharacterRankingPage />
         </div>
 
-        {/* Page 4: YouTube Player */}
+        {/* Page 4: Character Reviews */}
+        <div className="relative bg-gray-900" style={{ width: '1920px', height: '1080px' }}>
+          <CharacterReviewsPage />
+        </div>
+
+        {/* Page 5: YouTube Player */}
         <div className="relative bg-white" style={{ width: '1920px', height: '1080px' }}>
           <YouTubePlayer />
         </div>
 
-        {/* Page 5: Summary */}
-        <div className="relative p-8 bg-white" style={{ width: '1920px', height: '1080px' }}>
-        <div className="h-full flex flex-col justify-center items-center">
-          <h2 className="text-7xl font-bold mb-12">실시간 요약</h2>
-          <div className="grid grid-cols-2 gap-12">
-            <div className="text-center">
-              <div className="text-9xl font-black">{data?.totalActiveUsers || 0}</div>
-              <div className="text-4xl mt-4">전체 사용자</div>
-            </div>
-            <div className="text-center">
-              <div className="text-9xl font-black">{data?.locationDetails?.length || 0}</div>
-              <div className="text-4xl mt-4">접속 도시</div>
-            </div>
-          </div>
-          <div className="mt-16 text-3xl text-gray-600">
-            마지막 업데이트: {lastUpdate ? lastUpdate.toLocaleString('ko-KR') : '대기 중...'}
-          </div>
-          </div>
+        {/* Page 6: Rocket Animation - Our Journey (Last Page) */}
+        <div className="relative bg-white" style={{ width: '1920px', height: '1080px' }}>
+          <RocketAnimation />
         </div>
       </div>
     </>
