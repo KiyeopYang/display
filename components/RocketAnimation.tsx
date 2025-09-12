@@ -118,6 +118,12 @@ export default function RocketAnimation() {
             <stop offset="100%" stopColor="#ec4899" stopOpacity="1" />
           </linearGradient>
 
+          <linearGradient id="nextPathGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#64748b" stopOpacity="0.3" />
+            <stop offset="50%" stopColor="#94a3b8" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#cbd5e1" stopOpacity="0.3" />
+          </linearGradient>
+
           <radialGradient id="glowGradient">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
             <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.4" />
@@ -195,39 +201,15 @@ export default function RocketAnimation() {
           </g>
         ))}
 
-        {/* Simple trajectory path with opacity animation */}
+        {/* Next trajectory path - dotted line with opacity */}
         <path
           d={generateTrajectoryPath()}
-          stroke="#ffffff"
+          stroke="#94a3b8"
           strokeWidth="2"
           fill="none"
-          strokeDasharray="10 5"
-          opacity="0"
-        >
-          <animate
-            attributeName="opacity"
-            values="0;0.3;0.5;0.3;0.5;0.3"
-            dur="3s"
-            repeatCount="indefinite"
-          />
-        </path>
-
-        {/* Main trajectory path - simple fade in */}
-        <path
-          d={generateTrajectoryPath()}
-          stroke="url(#pathGradient)"
-          strokeWidth="3"
-          fill="none"
-          opacity="0"
-        >
-          <animate
-            attributeName="opacity"
-            values="0;0;0.8"
-            dur="3s"
-            begin="0.5s"
-            fill="freeze"
-          />
-        </path>
+          strokeDasharray="5 5"
+          opacity="0.4"
+        />
 
         {/* Traced path - follows the object */}
         <path
