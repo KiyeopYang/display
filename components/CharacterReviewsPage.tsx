@@ -109,7 +109,7 @@ export default function CharacterReviewsPage() {
 
             {/* Review Text - Much bigger text, fills remaining space */}
             <div className="flex-1 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg p-6 border border-gray-700/50 flex items-center">
-              <p className="text-5xl text-white leading-tight font-bold">
+              <p className="text-7xl text-white leading-tight font-bold">
                 {review.review}
               </p>
             </div>
