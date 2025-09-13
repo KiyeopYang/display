@@ -6,7 +6,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 const LUNCH_START_MINUTES = 11 * 60 + 45; // 11:45 AM
 const LUNCH_END_MINUTES = 13 * 60; // 1:00 PM
 const COUNTDOWN_SECONDS = 10;
-const VIDEO_CHANGE_HOURS = 12;
+const VIDEO_CHANGE_HOURS = 6; // Change video every 6 hours
 
 // YouTube video playlist
 const PLAYLIST = [
@@ -120,8 +120,10 @@ const styles = {
 };
 
 export default function YouTubeAutoPlayer() {
-  // State management
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  // State management - initialize with random video
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(() => 
+    Math.floor(Math.random() * PLAYLIST.length)
+  );
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLunchTime, setIsLunchTime] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -161,9 +163,10 @@ export default function YouTubeAutoPlayer() {
       hasStartedPlayback.current = false;
     }
     
-    // Rotate video every 12 hours
+    // Rotate video every 6 hours
     const hoursSinceLastChange = (now.getTime() - lastVideoChange.getTime()) / (1000 * 60 * 60);
     if (hoursSinceLastChange >= VIDEO_CHANGE_HOURS) {
+      console.log(`[YouTube Player] Rotating video after ${VIDEO_CHANGE_HOURS} hours`);
       selectRandomVideo();
     }
   }, [isPlaying, lastVideoChange, selectRandomVideo]);
@@ -171,9 +174,23 @@ export default function YouTubeAutoPlayer() {
   // Initialize and schedule checks
   useEffect(() => {
     checkSchedule();
-    const interval = setInterval(checkSchedule, 1000);
-    return () => clearInterval(interval);
-  }, [checkSchedule]);
+    const interval = setInterval(checkSchedule, 10000); // Check every 10 seconds instead of 1 second
+    
+    // Also check for video rotation every minute for better accuracy
+    const rotationInterval = setInterval(() => {
+      const now = new Date();
+      const hoursSinceLastChange = (now.getTime() - lastVideoChange.getTime()) / (1000 * 60 * 60);
+      if (hoursSinceLastChange >= VIDEO_CHANGE_HOURS) {
+        console.log(`[YouTube Player] Auto-rotating video after ${VIDEO_CHANGE_HOURS} hours`);
+        selectRandomVideo();
+      }
+    }, 60000); // Check every minute
+    
+    return () => {
+      clearInterval(interval);
+      clearInterval(rotationInterval);
+    };
+  }, [checkSchedule, selectRandomVideo]);
 
   // Handle playback start with countdown
   useEffect(() => {
@@ -245,7 +262,7 @@ export default function YouTubeAutoPlayer() {
   // Render player (always loaded)
   return (
     <div style={styles.container}>
-      {/* YouTube iframe - always loaded */}
+      {/* YouTube iframe - always loaded, visible and clickable */}
       <iframe
         ref={iframeRef}
         key={currentVideoIndex}
@@ -263,90 +280,93 @@ export default function YouTubeAutoPlayer() {
           width: '1920px',
           height: '1080px',
           border: 0,
-          opacity: isPlaying ? 1 : 0.3,
-          visibility: isLunchTime ? 'visible' : 'hidden'
+          opacity: isPlaying ? 1 : 0.8,
+          visibility: 'visible',
+          zIndex: 1 // Always visible and clickable
         }}
       />
 
-      {/* Waiting screen outside lunch time */}
+      {/* Waiting screen outside lunch time - positioned to not block player */}
       {!isLunchTime && (
-        <div style={{ ...styles.centerOverlay }}>
-          <div style={{ fontSize: '72px', marginBottom: '30px' }}>🍱</div>
-          <div style={{ fontSize: '48px', fontWeight: 'bold', marginBottom: '20px' }}>
-            점심시간 음악
-          </div>
-          <div style={{ fontSize: '32px', opacity: 0.8, marginBottom: '40px' }}>
+        <div style={{ 
+          position: 'absolute',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          textAlign: 'center',
+          color: 'white',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          padding: '20px 40px',
+          borderRadius: '15px',
+          zIndex: 2,
+          pointerEvents: 'none' // Don't block clicks
+        }}>
+          <div style={{ fontSize: '36px', marginBottom: '10px' }}>🍱 점심시간 음악</div>
+          <div style={{ fontSize: '20px', opacity: 0.8 }}>
             11:45 AM - 1:00 PM
           </div>
           {minutesUntilLunch > 0 && (
-            <div style={{ fontSize: '24px', opacity: 0.6 }}>
-              다음 재생까지: {hoursUntilLunch}시간 {minsUntilLunch}분
+            <div style={{ fontSize: '18px', opacity: 0.6, marginTop: '10px' }}>
+              다음 자동 재생까지: {hoursUntilLunch}시간 {minsUntilLunch}분
             </div>
           )}
-          <div style={{ fontSize: '20px', opacity: 0.5, marginTop: '20px' }}>
-            현재 시간: {new Date().toLocaleTimeString('ko-KR')}
-          </div>
         </div>
       )}
       
-      {/* Countdown overlay */}
+      {/* Countdown overlay - positioned to not block player */}
       {!isPlaying && countdown > 0 && (
-        <div style={{ ...styles.centerOverlay, ...styles.countdownOverlay }}>
-          <div style={{ fontSize: '72px', marginBottom: '20px', fontWeight: 'bold' }}>
+        <div style={{ 
+          position: 'absolute',
+          bottom: '100px',
+          right: '40px',
+          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+          padding: '30px 40px',
+          borderRadius: '15px',
+          border: '2px solid rgba(255, 255, 255, 0.3)',
+          textAlign: 'center',
+          color: 'white',
+          zIndex: 3,
+          pointerEvents: 'none'
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '10px', fontWeight: 'bold' }}>
             {countdown}
           </div>
-          <div style={{ fontSize: '28px', opacity: 0.9 }}>
-            재생 시작까지
+          <div style={{ fontSize: '20px', opacity: 0.9 }}>
+            자동 재생 시작까지
           </div>
         </div>
       )}
       
-      {/* Pause overlay */}
-      {!isPlaying && countdown === 0 && (
-        <div style={{ ...styles.centerOverlay, ...styles.pauseOverlay }}>
-          <div style={{ fontSize: '48px', marginBottom: '15px' }}>⏸</div>
-          <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '10px' }}>
-            대기 중
-          </div>
-          <div style={{ fontSize: '24px', opacity: 0.9 }}>
-            잠시 후 재생됩니다
-          </div>
-        </div>
-      )}
+      {/* Remove pause overlay completely to not block player */}
       
-      {/* Info overlay */}
-      <div style={styles.infoOverlay}>
+      {/* Info overlay - make it non-blocking */}
+      <div style={{
+        ...styles.infoOverlay,
+        pointerEvents: 'none' // Don't block clicks
+      }}>
         <div style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px' }}>
           🎵 {currentVideo.title}
         </div>
         <div style={{ fontSize: '18px', opacity: 0.8 }}>
-          {isPlaying ? '재생 중' : '일시 정지'}
+          {isPlaying ? '자동 재생 중' : isLunchTime ? '자동 재생 대기' : '수동 제어 가능'}
+        </div>
+        <div style={{ fontSize: '14px', opacity: 0.6, marginTop: '8px' }}>
+          다음 곡 변경: {Math.max(0, Math.floor(VIDEO_CHANGE_HOURS - ((new Date().getTime() - lastVideoChange.getTime()) / (1000 * 60 * 60))))}시간 {Math.max(0, Math.floor((VIDEO_CHANGE_HOURS * 60 - ((new Date().getTime() - lastVideoChange.getTime()) / (1000 * 60))) % 60))}분 후
         </div>
       </div>
 
-      {/* Status overlay */}
-      <div style={styles.statusOverlay}>
-        <div>점심시간 음악</div>
+      {/* Status overlay - make it non-blocking */}
+      <div style={{
+        ...styles.statusOverlay,
+        pointerEvents: 'none' // Don't block clicks
+      }}>
+        <div>{isLunchTime ? '점심시간 자동 재생' : 'YouTube 플레이어'}</div>
         <div style={{ marginTop: '10px', fontSize: '16px', opacity: 0.7 }}>
-          11:45 AM - 1:00 PM
+          {isLunchTime ? '11:45 AM - 1:00 PM' : '수동 제어 가능'}
         </div>
       </div>
 
-      {/* Playing indicator */}
-      {isPlaying && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          fontSize: '120px',
-          color: 'rgba(255, 255, 255, 0.3)',
-          zIndex: 3,
-          pointerEvents: 'none'
-        }}>
-          ▶️
-        </div>
-      )}
+      {/* Remove playing indicator to not obstruct the player */}
     </div>
   );
 }

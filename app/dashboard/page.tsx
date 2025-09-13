@@ -34,6 +34,11 @@ const CompanyMissionPage = dynamic(() => import('@/components/CompanyMissionPage
   loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">미션 로딩 중...</div></div>
 });
 
+const GeometricAnimation = dynamic(() => import('@/components/GeometricAnimation'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">애니메이션 로딩 중...</div></div>
+});
+
 interface LocationDetail {
   country: string;
   city: string;
@@ -62,7 +67,7 @@ export default function Dashboard() {
   const [noBlackMode, setNoBlackMode] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [animatedDots, setAnimatedDots] = useState<Array<{left: number, top: number, delay: number, duration: number, opacity: number}>>([]);
-  const totalPages = 5; // Changed to 5 pages for the loop (including mission page)
+  const totalPages = 8; // Total 8 pages including geometric animation
 
   const fetchAnalyticsData = async () => {
     setLoading(true);
@@ -502,7 +507,12 @@ export default function Dashboard() {
           <YouTubePlayer />
         </div>
 
-        {/* Page 7: Rocket Animation - Our Journey (Last Page) */}
+        {/* Page 7: Geometric Animation */}
+        <div className="relative" style={{ width: '1920px', height: '1080px' }}>
+          <GeometricAnimation />
+        </div>
+
+        {/* Page 8: Rocket Animation - Our Journey (Last Page) */}
         <div className="relative bg-white" style={{ width: '1920px', height: '1080px' }}>
           <RocketAnimation />
         </div>
