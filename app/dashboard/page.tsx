@@ -58,7 +58,7 @@ export default function Dashboard() {
   const [noBlackMode, setNoBlackMode] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [animatedDots, setAnimatedDots] = useState<Array<{left: number, top: number, delay: number, duration: number, opacity: number}>>([]);
-  const totalPages = 6; // Total 6 pages
+  const totalPages = 5; // Total 5 pages for rotation (YouTube player is page 6 but not in rotation)
 
   const fetchAnalyticsData = async () => {
     setLoading(true);
@@ -119,7 +119,7 @@ export default function Dashboard() {
     }
   };
 
-  // Auto scroll to next page every 10 minutes (pages 1, 2, 3 in loop)
+  // Auto scroll to next page every 10 minutes (pages 1-5 in loop, excluding YouTube page)
   useEffect(() => {
     if (!isNightMode && !isLunchTime) {
       console.log('Starting auto-scroll interval (10 minutes)');
@@ -138,13 +138,21 @@ export default function Dashboard() {
     }
   }, [isNightMode, isLunchTime, totalPages]);
 
-  // Scroll to current page when it changes
+  // Scroll to current page when it changes or lunch time status changes
   useEffect(() => {
-    if (typeof window !== 'undefined' && !isNightMode && !isLunchTime) {
+    if (typeof window !== 'undefined' && !isNightMode) {
       // Small delay to ensure DOM is ready
       setTimeout(() => {
-        const targetY = currentPage * 1080;
-        console.log('Scrolling to page:', currentPage + 1, 'Y position:', targetY);
+        let targetY;
+        if (isLunchTime) {
+          // During lunch time, scroll to YouTube player (page 6, index 5)
+          targetY = 5 * 1080;
+          console.log('Lunch time - scrolling to YouTube player page 6, Y position:', targetY);
+        } else {
+          // Normal rotation (pages 1-5)
+          targetY = currentPage * 1080;
+          console.log('Scrolling to page:', currentPage + 1, 'Y position:', targetY);
+        }
         window.scrollTo(0, targetY);
         // Also try with document.documentElement for better browser compatibility
         document.documentElement.scrollTop = targetY;
@@ -260,14 +268,6 @@ export default function Dashboard() {
     );
   }
 
-  // If lunch time (11:45 - 13:00), show YouTube player page
-  if (isLunchTime) {
-    return (
-      <div className="relative bg-white" style={{ width: '1920px', height: '1080px' }}>
-        <YouTubePlayer />
-      </div>
-    );
-  }
 
   return (
     <>
