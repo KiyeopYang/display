@@ -9,11 +9,6 @@ const UserMetricsChart = dynamic(() => import('@/components/UserMetricsChart'), 
   loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">차트 로딩 중...</div></div>
 });
 
-const RocketAnimation = dynamic(() => import('@/components/RocketAnimation'), {
-  ssr: false,
-  loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">애니메이션 로딩 중...</div></div>
-});
-
 const YouTubePlayer = dynamic(() => import('@/components/YouTubeAutoPlayer'), {
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">플레이어 로딩 중...</div></div>
@@ -34,10 +29,6 @@ const CompanyMissionPage = dynamic(() => import('@/components/CompanyMissionPage
   loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">미션 로딩 중...</div></div>
 });
 
-const GeometricAnimation = dynamic(() => import('@/components/GeometricAnimation'), {
-  ssr: false,
-  loading: () => <div className="flex items-center justify-center h-full"><div className="text-4xl font-bold">애니메이션 로딩 중...</div></div>
-});
 
 interface LocationDetail {
   country: string;
@@ -67,7 +58,7 @@ export default function Dashboard() {
   const [noBlackMode, setNoBlackMode] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [animatedDots, setAnimatedDots] = useState<Array<{left: number, top: number, delay: number, duration: number, opacity: number}>>([]);
-  const totalPages = 8; // Total 8 pages including geometric animation
+  const totalPages = 6; // Total 6 pages
 
   const fetchAnalyticsData = async () => {
     setLoading(true);
@@ -505,16 +496,6 @@ export default function Dashboard() {
         {/* Page 6: YouTube Player */}
         <div className="relative bg-white" style={{ width: '1920px', height: '1080px' }}>
           <YouTubePlayer />
-        </div>
-
-        {/* Page 7: Geometric Animation */}
-        <div className="relative" style={{ width: '1920px', height: '1080px' }}>
-          <GeometricAnimation />
-        </div>
-
-        {/* Page 8: Rocket Animation - Our Journey (Last Page) */}
-        <div className="relative bg-white" style={{ width: '1920px', height: '1080px' }}>
-          <RocketAnimation />
         </div>
       </div>
     </>
