@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arimate 사용자 구매 행동 분석 보고서</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fff;
+        }
+        
+        .container {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20mm;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+        }
+        
+        h2 {
+            color: #34495e;
+            font-size: 22px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: linear-gradient(90deg, #f0f3f7 0%, transparent 100%);
+            border-left: 4px solid #3498db;
+        }
+        
+        h3 {
+            color: #555;
+            font-size: 18px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .summary-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .key-metric {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .key-metric h4 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .key-metric .value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .key-metric .detail {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .insight-card {
+            background: #fff;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .insight-card h4 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        
+        .recommendation {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .recommendation h4 {
+            color: #2e7d32;
+            margin-bottom: 8px;
+        }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .metric-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .metric-item .label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .metric-item .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .page-break {
+            page-break-after: always;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            text-align: center;
+            color: #6c757d;
+            font-size: 12px;
+        }
+        
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        .emoji {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+        
+        @media print {
+            .container {
+                padding: 10mm;
+            }
+            .page-break {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 표지 -->
+        <div style="text-align: center; padding: 100px 0;">
+            <h1 style="font-size: 36px; border: none;">Arimate 사용자 구매 행동 분석 보고서</h1>
+            <p style="font-size: 18px; color: #666; margin-top: 20px;">2025년 데이터 기반 인사이트</p>
+            <p style="font-size: 14px; color: #999; margin-top: 40px;">작성일: 2025년 9월 21일</p>
+        </div>
+        
+        <div class="page-break"></div>
+        
+        <!-- 핵심 요약 -->
+        <h1>Executive Summary</h1>
+        <div class="summary-box">
+            <h3>🎯 메인 타겟 유저</h3>
+            <div class="key-metric">
+                <h4>최우선 공략 대상</h4>
+                <div class="value">30대 남성</div>
+                <div class="detail">전체 매출 38.78% | 구매 전환율 47.67% | 평균 구매액 3,303 보석</div>
+            </div>
+            
+            <h3 style="margin-top: 20px;">💰 매출 극대화 전략</h3>
+            <div class="recommendation">
+                <h4>즉시 실행 가능한 최우선 과제</h4>
+                <p><strong>20대 미구매자 268명</strong>을 <strong>가입 당일</strong> 첫 구매로 전환</p>
+                <p>예상 효과: <span class="highlight">+720,000 보석 (매출 8.4% 증가)</span></p>
+            </div>
+        </div>
+        
+        <div class="page-break"></div>
+        
+        <!-- 전체 사용자 현황 -->
+        <h1>1. 전체 사용자 현황</h1>
+        
+        <h2>1.1 연령별 사용자 분포</h2>
+        <table>
+            <tr>
+                <th>연령대</th>
+                <th>사용자 수</th>
+                <th>비율</th>
+                <th>특징</th>
+            </tr>
+            <tr>
+                <td>20대 (20-29세)</td>
+                <td>485명</td>
+                <td>39.1%</td>
+                <td>가장 큰 비중, 특히 1999년생(25세) 138명으로 최다</td>
+            </tr>
+            <tr>
+                <td>30대 (30-39세)</td>
+                <td>384명</td>
+                <td>30.97%</td>
+                <td>두 번째로 큰 그룹</td>
+            </tr>
+            <tr>
+                <td>40대 (40-49세)</td>
+                <td>252명</td>
+                <td>20.32%</td>
+                <td>안정적 구매력</td>
+            </tr>
+            <tr>
+                <td>50대 이상</td>
+                <td>93명</td>
+                <td>7.5%</td>
+                <td>적은 비중</td>
+            </tr>
+        </table>
+        
+        <h2>1.2 성별 분포</h2>
+        <div class="metric-grid">
+            <div class="metric-item">
+                <div class="label">남성</div>
+                <div class="value">99.12%</div>
+            </div>
+            <div class="metric-item">
+                <div class="label">여성</div>
+                <div class="value">0.88%</div>
+            </div>
+        </div>
+        
+        <div class="page-break"></div>
+        
+        <!-- 구매 행동 분석 -->
+        <h1>2. 구매 행동 심층 분석</h1>
+        
+        <h2>2.1 나이대별 구매력 분석</h2>
+        <table>
+            <tr>
+                <th>연령대</th>
+                <th>총 구매액</th>
+                <th>전체 비중</th>
+                <th>구매자 수</th>
+                <th>구매 전환율</th>
+                <th>구매자당 평균</th>
+            </tr>
+            <tr style="background-color: #fff3cd;">
+                <td><strong>30대</strong></td>
+                <td><strong>607,736 보석</strong></td>
+                <td><strong>38.78%</strong></td>
+                <td>184명</td>
+                <td><strong>47.67%</strong></td>
+                <td><strong>3,303 보석</strong></td>
+            </tr>
+            <tr>
+                <td>20대</td>
+                <td>524,947 보석</td>
+                <td>33.49%</td>
+                <td>192명</td>
+                <td>41.92%</td>
+                <td>2,724 보석</td>
+            </tr>
+            <tr>
+                <td>40대</td>
+                <td>348,477 보석</td>
+                <td>22.23%</td>
+                <td>115명</td>
+                <td>40.64%</td>
+                <td>3,033 보석</td>
+            </tr>
+            <tr>
+                <td>50대 이상</td>
+                <td>63,271 보석</td>
+                <td>4.04%</td>
+                <td>26명</td>
+                <td>34.67%</td>
+                <td>2,434 보석</td>
+            </tr>
+        </table>
+        
+        <h2>2.2 구매 패턴 분석</h2>
+        <h3>거래당 평균 구매액</h3>
+        <div class="metric-grid">
+            <div class="metric-item">
+                <div class="label">50대</div>
+                <div class="value">322 보석</div>
+            </div>
+            <div class="metric-item">
+                <div class="label">40대</div>
+                <div class="value">311 보석</div>
+            </div>
+            <div class="metric-item">
+                <div class="label">30대</div>
+                <div class="value">300 보석</div>
+            </div>
+            <div class="metric-item">
+                <div class="label">20대</div>
+                <div class="value">246 보석</div>
+            </div>
+        </div>
+        
+        <h3>구매 빈도 (연간)</h3>
+        <div class="metric-grid">
+            <div class="metric-item">
+                <div class="label">30대</div>
+                <div class="value">10.5회</div>
+            </div>
+            <div class="metric-item">
+                <div class="label">40대</div>
+                <div class="value">10.4회</div>
+            </div>
+            <div class="metric-item">
+                <div class="label">20대</div>
+                <div class="value">8.3회</div>
+            </div>
+            <div class="metric-item">
+                <div class="label">50대 이상</div>
+                <div class="value">7.5회</div>
+            </div>
+        </div>
+        
+        <div class="page-break"></div>
+        
+        <!-- 핵심 인사이트 -->
+        <h1>3. 핵심 발견 인사이트</h1>
+        
+        <div class="insight-card">
+            <h4><span class="emoji">⏰</span>새벽 시간대가 숨은 금맥</h4>
+            <ul>
+                <li>새벽 0-6시 매출이 전체의 <strong>23%</strong> (약 200만 보석)</li>
+                <li>평일 총 매출이 주말보다 <strong>2.3배</strong> 많음 (70% vs 30%)</li>
+                <li>단, 일평균 매출은 주말(13,514 보석)이 평일(12,679 보석)보다 <strong>6.6% 높음</strong></li>
+            </ul>
+            <div class="recommendation">
+                <h4>전략 제안</h4>
+                <p>새벽 시간대 특별 보너스 + 주말 집중 프로모션 (일평균 매출이 더 높음)</p>
+            </div>
+        </div>
+        
+        <div class="insight-card">
+            <h4><span class="emoji">🚀</span>30대는 즉시 구매하는 충동형</h4>
+            <ul>
+                <li>첫 구매까지 평균 <strong>9.9일</strong> (전 연령대 중 가장 빠름)</li>
+                <li>절반이 가입 당일 구매 (중앙값 0일)</li>
+                <li>비교: 20대 14.7일, 40대 19.3일, 50대 23일</li>
+            </ul>
+            <div class="recommendation">
+                <h4>전략 제안</h4>
+                <p>30대 신규 가입자에게 가입 즉시 한정 오퍼 제공</p>
+            </div>
+        </div>
+        
+        <div class="insight-card">
+            <h4><span class="emoji">🐋</span>고래 사용자 특성 (상위 10%)</h4>
+            <ul>
+                <li>평균 나이: <strong>35세</strong>, 98.7% 남성</li>
+                <li>일반 사용자의 <strong>12배</strong> 구매 (8,669 vs 710 보석)</li>
+                <li>활동 기간 <strong>50% 더 김</strong> (155일 vs 103일)</li>
+                <li>구매 빈도 <strong>4배 높음</strong> (21.3회 vs 4.9회)</li>
+            </ul>
+            <div class="recommendation">
+                <h4>전략 제안</h4>
+                <p>VIP 등급 시스템 도입으로 고래 사용자 Lock-in</p>
+            </div>
+        </div>
+        
+        <div class="insight-card">
+            <h4><span class="emoji">💎</span>성별 특성: 남성이 압도적</h4>
+            <ul>
+                <li>남성이 전체 사용자의 <strong>99.12%</strong></li>
+                <li>남성이 전체 매출의 <strong>99%</strong> 차지</li>
+                <li>여성 40대 1명이 11,943 보석 구매 (여성 최고액)</li>
+            </ul>
+            <div class="recommendation">
+                <h4>전략 제안</h4>
+                <p>남성 타겟 콘텐츠 및 마케팅에 집중</p>
+            </div>
+        </div>
+        
+        <div class="page-break"></div>
+        
+        <!-- 매출 극대화 전략 -->
+        <h1>4. 매출 극대화 전략</h1>
+        
+        <h2>4.1 우선순위별 실행 과제</h2>
+        
+        <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #1976d2;">🥇 최우선 과제</h3>
+            <table style="background: white;">
+                <tr>
+                    <th>대상 (X)</th>
+                    <th>행동 (Y)</th>
+                    <th>목표 (Z)</th>
+                    <th>예상 효과</th>
+                </tr>
+                <tr>
+                    <td><strong>20대 미구매자 268명</strong></td>
+                    <td>첫 구매 전환</td>
+                    <td>가입 당일 (0일)</td>
+                    <td><span class="highlight">+720,000 보석 (8.4% ↑)</span></td>
+                </tr>
+            </table>
+            <p style="margin-top: 15px;"><strong>실행 방법:</strong> 가입 10분 내 "지금만" 80% 할인 제공</p>
+        </div>
+        
+        <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #7b1fa2;">🥈 차선 과제</h3>
+            <table style="background: white;">
+                <tr>
+                    <th>대상 (X)</th>
+                    <th>행동 (Y)</th>
+                    <th>목표 (Z)</th>
+                    <th>예상 효과</th>
+                </tr>
+                <tr>
+                    <td><strong>30-40대 구매자 300명</strong></td>
+                    <td>구매 빈도 증가</td>
+                    <td>월 1회 추가</td>
+                    <td><span class="highlight">+900,000 보석 (10.4% ↑)</span></td>
+                </tr>
+            </table>
+            <p style="margin-top: 15px;"><strong>실행 방법:</strong> 월간 보석 구독 패스 도입</p>
+        </div>
+        
+        <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #f57c00;">🥉 세번째 과제</h3>
+            <table style="background: white;">
+                <tr>
+                    <th>대상 (X)</th>
+                    <th>행동 (Y)</th>
+                    <th>목표 (Z)</th>
+                    <th>예상 효과</th>
+                </tr>
+                <tr>
+                    <td><strong>상위 30% 구매자 160명</strong></td>
+                    <td>객단가 상향</td>
+                    <td>건당 50% 증가</td>
+                    <td><span class="highlight">+480,000 보석 (5.5% ↑)</span></td>
+                </tr>
+            </table>
+            <p style="margin-top: 15px;"><strong>실행 방법:</strong> VIP 티어 시스템 + 누적 구매액 진행바</p>
+        </div>
+        
+        <div class="page-break"></div>
+        
+        <!-- 실행 로드맵 -->
+        <h1>5. 실행 로드맵</h1>
+        
+        <h2>5.1 즉시 실행 (1주 내)</h2>
+        <ul style="line-height: 2;">
+            <li>✅ 20대 신규 가입자 대상 10분 타이머 웰컴 오퍼</li>
+            <li>✅ 30대 가입자 즉시 구매 유도 팝업</li>
+            <li>✅ 새벽 시간대 (0-6시) 보너스 이벤트 공지</li>
+        </ul>
+        
+        <h2>5.2 단기 실행 (1개월 내)</h2>
+        <ul style="line-height: 2;">
+            <li>📋 VIP 등급 시스템 설계 및 구현</li>
+            <li>📋 월간 구독 패스 상품 개발</li>
+            <li>📋 평일 정기 이벤트 캘린더 수립</li>
+        </ul>
+        
+        <h2>5.3 중기 실행 (3개월 내)</h2>
+        <ul style="line-height: 2;">
+            <li>📊 고래 사용자 전용 프리미엄 서비스</li>
+            <li>📊 개인화된 구매 추천 시스템</li>
+            <li>📊 리텐션 강화 프로그램</li>
+        </ul>
+        
+        <h2>5.4 성과 측정 지표</h2>
+        <table>
+            <tr>
+                <th>KPI</th>
+                <th>현재</th>
+                <th>목표 (3개월)</th>
+                <th>측정 방법</th>
+            </tr>
+            <tr>
+                <td>20대 구매 전환율</td>
+                <td>41.92%</td>
+                <td>55%</td>
+                <td>월간 코호트 분석</td>
+            </tr>
+            <tr>
+                <td>30대 첫 구매 소요일</td>
+                <td>9.9일</td>
+                <td>3일 이내</td>
+                <td>가입-구매 간격 추적</td>
+            </tr>
+            <tr>
+                <td>구매자당 평균 구매액</td>
+                <td>2,900 보석</td>
+                <td>3,500 보석</td>
+                <td>월간 ARPU</td>
+            </tr>
+            <tr>
+                <td>고래 사용자 비율</td>
+                <td>10%</td>
+                <td>15%</td>
+                <td>구매액 상위 퍼센타일</td>
+            </tr>
+        </table>
+        
+        <div class="page-break"></div>
+        
+        <!-- 결론 -->
+        <h1>6. 결론 및 제언</h1>
+        
+        <div class="summary-box">
+            <h3>핵심 성공 요인</h3>
+            <ol style="line-height: 2;">
+                <li><strong>30대 남성</strong>을 핵심 타겟으로 한 마케팅 집중</li>
+                <li><strong>가입 즉시</strong> 구매 유도하는 강력한 온보딩</li>
+                <li><strong>새벽 시간대</strong> 특별 프로모션 활용</li>
+                <li><strong>VIP 시스템</strong>으로 고객 충성도 강화</li>
+                <li><strong>평일 중심</strong> 이벤트 전략</li>
+            </ol>
+            
+            <div style="background: #e8f5e9; padding: 20px; margin-top: 20px; border-radius: 8px;">
+                <h3 style="color: #2e7d32;">💡 최종 제언</h3>
+                <p style="font-size: 16px; line-height: 1.8;">
+                    현재 데이터는 <strong>30대 남성이 가장 우수한 고객층</strong>임을 명확히 보여줍니다.
+                    하지만 <strong>20대의 거대한 잠재력</strong>을 놓치고 있습니다.
+                    <br><br>
+                    <strong style="color: #1976d2;">즉시 실행 가능하고 ROI가 가장 높은 전략은
+                    "20대 신규 가입자의 즉시 구매 전환"입니다.</strong>
+                    <br><br>
+                    가입 10분 내 한정 오퍼로 시작하여, 
+                    점진적으로 VIP 시스템과 구독 모델을 도입한다면
+                    <strong>3개월 내 20% 이상의 매출 성장</strong>이 가능할 것으로 예상됩니다.
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>본 보고서는 Arimate 사용자 데이터베이스 분석을 기반으로 작성되었습니다.</p>
+            <p>분석 기간: 2023년 9월 ~ 2025년 9월 | 총 분석 사용자: 1,240명 | 총 구매 건수: 34,009건</p>
+        </div>
+    </div>
+</body>
+</html>
